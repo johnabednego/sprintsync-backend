@@ -1,5 +1,3 @@
-// controllers/authController.js
-
 const User         = require('../models/User');
 const emailService = require('../services/emailService');
 const tokenService = require('../services/tokenService');
