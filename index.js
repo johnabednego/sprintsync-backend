@@ -10,6 +10,7 @@ const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const projectRoutes = require('./routes/projectRoutes');
 const timeEntryRoutes = require('./routes/timeEntryRoutes');
+const commentRoutes = require('./routes/commentRoutes');
 
 
 // Initialize app
@@ -49,6 +50,8 @@ app.use('/api/task', taskRoutes);
 app.use('/api/project', projectRoutes);
 // Mount timeEntry routes
 app.use('/api/time-entries', timeEntryRoutes);
+// Mount comment routes
+app.use('/api/comments', commentRoutes);
 
 // Example root route
 app.get('/', (req, res) => {

@@ -209,3 +209,33 @@ exports.sendTimeEntryNotification = async (type, entry, recipient) => {
   await transporter.sendMail({ from: process.env.SMTP_FROM, to: recipient.email, subject, html });
 };
 
+/**
+ * Send a comment notification email.
+ *
+ * @param {object} comment   – populated Comment doc
+ * @param {object} recipient – { email, firstName, lastName }
+ */
+exports.sendCommentNotification = async (comment, recipient) => {
+  const task = comment.task;
+  const commenter = comment.author;
+  const html = `
+    <div style="font-family: sans-serif; max-width:600px; margin:auto; padding:20px; background:#f9f9f9; border-radius:8px;">
+      <h2 style="color:#333;">💬 New Comment on "${task.title}"</h2>
+      <p>Hi ${recipient.firstName},</p>
+      <p><strong>${commenter.firstName} ${commenter.lastName}</strong> commented on the task:</p>
+      <blockquote style="border-left:4px solid #ccc; margin:10px 0; padding-left:10px; color:#555;">
+        ${comment.text}
+      </blockquote>
+      <p><a href="<FRONTEND_URL>/tasks/${task._id}">View Task & Reply</a></p>
+      <hr style="margin-top:20px;">
+      <p style="font-size:12px; color:#999;">SprintSync Notification</p>
+    </div>
+  `;
+
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM,
+    to: recipient.email,
+    subject: `🗨️ New Comment on "${task.title}"`,
+    html
+  });
+};
