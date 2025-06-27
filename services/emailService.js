@@ -14,13 +14,15 @@ if (!SMTP_USER || !SMTP_PASS || !SMTP_FROM) {
   throw new Error('SMTP_USER, SMTP_PASS and SMTP_FROM must be set');
 }
 
+const platformName = 'SprintSync';
+const platformColor = '#2c3e50';
+
 /**
  * Send a otp-related  email.
  * 
  * */
 
 exports.sendOTP = async (to, otp, emailPurpose) => {
-  const platformName = 'SprintSync'; 
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; background: #f7f7f7; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
@@ -297,10 +299,6 @@ exports.sendTagNotification = async (type, tag, recipient) => {
 };
 
 
-const platformName = 'SprintSync';
-const platformColor = '#2c3e50';
-
-
 /**
  * Sends an audit‐style email summary for a log entry.
  *
@@ -361,3 +359,4 @@ exports.sendAuditNotification = async (to, log) => {
     text: `${title}\nPerformed by ${user.firstName} ${user.lastName} at ${createdAt}`
   });
 };
+
