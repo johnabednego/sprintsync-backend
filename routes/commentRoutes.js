@@ -55,6 +55,7 @@ router.post('/', requireAuth, ctl.createComment);
  */
 router.get('/task/:taskId', requireAuth, ctl.getCommentsByTask);
 
+
 /**
  * @swagger
  * /comments/{id}:

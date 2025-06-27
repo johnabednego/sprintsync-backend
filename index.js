@@ -53,6 +53,7 @@ app.use('/api/time-entries', timeEntryRoutes);
 // Mount comment routes
 app.use('/api/comments', commentRoutes);
 
+
 // Example root route
 app.get('/', (req, res) => {
   res.send('Server is Up and Running!');
