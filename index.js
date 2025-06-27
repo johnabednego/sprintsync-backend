@@ -8,6 +8,9 @@ const setupSwaggerDocs = require('./config/swaggerUiConfig');
 const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
+const projectRoutes = require('./routes/projectRoutes');
+const timeEntryRoutes = require('./routes/timeEntryRoutes');
+
 
 // Initialize app
 const app = express();
@@ -42,6 +45,10 @@ app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 // Mount task routes
 app.use('/api/task', taskRoutes);
+// Mount project routes
+app.use('/api/project', projectRoutes);
+// Mount timeEntry routes
+app.use('/api/time-entries', timeEntryRoutes);
 
 // Example root route
 app.get('/', (req, res) => {

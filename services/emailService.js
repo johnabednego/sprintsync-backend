@@ -177,3 +177,35 @@ exports.sendProjectNotification = async (type, project, recipient) => {
   await transporter.sendMail({ from: SMTP_FROM, to: recipient.email, subject, html });
 };
 
+/**
+ * Send a time-entry notification email.
+ * @param {'created'} type
+ * @param {object} entry – populated TimeEntry document
+ * @param {object} recipient – { email, firstName, lastName }
+ */
+exports.sendTimeEntryNotification = async (type, entry, recipient) => {
+  const { task, minutes, startTime, endTime, notes, createdAt } = entry;
+  const fullName = `${recipient.firstName} ${recipient.lastName}`;
+  const subject = `Time Logged: ${minutes} minute(s) on task "${task.title}"`;
+  const intro = `A time entry has been logged for the following task.`;
+
+  const html = `
+    <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:20px;background:#fff;border-radius:8px;">
+      <h2>${subject}</h2>
+      <p>Hi ${fullName},</p>
+      <p>${intro}</p>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Task</strong></td><td style="padding:8px;border:1px solid #ddd;">${task.title}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Minutes</strong></td><td style="padding:8px;border:1px solid #ddd;">${minutes}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Start Time</strong></td><td style="padding:8px;border:1px solid #ddd;">${new Date(startTime).toLocaleString()}</td></tr>
+        ${endTime ? `<tr><td style="padding:8px;border:1px solid #ddd;"><strong>End Time</strong></td><td style="padding:8px;border:1px solid #ddd;">${new Date(endTime).toLocaleString()}</td></tr>` : ''}
+        ${notes ? `<tr><td style="padding:8px;border:1px solid #ddd;"><strong>Notes</strong></td><td style="padding:8px;border:1px solid #ddd;">${notes}</td></tr>` : ''}
+        <tr><td style="padding:8px;border:1px solid #ddd;"><strong>Logged At</strong></td><td style="padding:8px;border:1px solid #ddd;">${new Date(createdAt).toLocaleString()}</td></tr>
+      </table>
+      <p style="font-size:12px;color:#666;margin-top:20px;">SprintSync Notification</p>
+    </div>
+  `;
+
+  await transporter.sendMail({ from: process.env.SMTP_FROM, to: recipient.email, subject, html });
+};
+
