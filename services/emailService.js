@@ -239,3 +239,59 @@ exports.sendCommentNotification = async (comment, recipient) => {
     html
   });
 };
+
+
+/**
+ * Notify admins about tag lifecycle events.
+ *
+ * @param {'created'|'updated'|'deleted'} type
+ * @param {object} tag        – Tag document
+ * @param {object} recipient  – { email, firstName, lastName }
+ */
+exports.sendTagNotification = async (type, tag, recipient) => {
+  let subject, intro;
+  switch (type) {
+    case 'created':
+      subject = `New Tag Created: "${tag.name}"`;
+      intro   = `A new tag has been added by ${tag.createdBy.firstName} ${tag.createdBy.lastName}.`;
+      break;
+    case 'updated':
+      subject = `Tag Updated: "${tag.name}"`;
+      intro   = `Tag details have been modified.`;
+      break;
+    case 'deleted':
+      subject = `Tag Deleted: "${tag.name}"`;
+      intro   = `A tag has been removed from the system.`;
+      break;
+  }
+
+  const html = `
+    <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:20px;background:#fff;border-radius:8px;">
+      <h2>${subject}</h2>
+      <p>Hi ${recipient.firstName},</p>
+      <p>${intro}</p>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr>
+          <td style="padding:8px;border:1px solid #ddd;"><strong>Name</strong></td>
+          <td style="padding:8px;border:1px solid #ddd;">${tag.name}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px;border:1px solid #ddd;"><strong>Color</strong></td>
+          <td style="padding:8px;border:1px solid #ddd;">${tag.color}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px;border:1px solid #ddd;"><strong>Description</strong></td>
+          <td style="padding:8px;border:1px solid #ddd;">${tag.description || '—'}</td>
+        </tr>
+      </table>
+      <p style="font-size:12px;color:#666;margin-top:20px;">SprintSync Notification</p>
+    </div>
+  `;
+
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM,
+    to: recipient.email,
+    subject,
+    html
+  });
+};
