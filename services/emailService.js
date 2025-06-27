@@ -295,3 +295,69 @@ exports.sendTagNotification = async (type, tag, recipient) => {
     html
   });
 };
+
+
+const platformName = 'SprintSync';
+const platformColor = '#2c3e50';
+
+
+/**
+ * Sends an audit‐style email summary for a log entry.
+ *
+ * @param {string} to        Recipient email address
+ * @param {object} log       The saved AuditLog document (populated.user, action, entity, before, after, createdAt)
+ */
+exports.sendAuditNotification = async (to, log) => {
+  const { user, action, entity, entityId, before, after, createdAt } = log;
+  const title = `⏱️ [${action}] on ${entity}`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width:600px; margin:auto; padding:20px; background:#f7f7f7; border-radius:8px;">
+      <h2 style="color:${platformColor}; margin-bottom:0.5em;">${title}</h2>
+      <p style="font-size:14px; color:#555; margin-top:0;">
+        Performed by <strong>${user.firstName} ${user.lastName}</strong> 
+        on <em>${new Date(createdAt).toLocaleString()}</em>
+      </p>
+
+      <table style="width:100%; border-collapse:collapse; margin:20px 0;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:8px; background:#ececec;">Field</th>
+            <th style="text-align:left; padding:8px; background:#ececec;">Before</th>
+            <th style="text-align:left; padding:8px; background:#ececec;">After</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${
+            // pick all keys in 'after' (or both) and render diffs
+            Object.keys({ ...(before||{}), ...(after||{}) })
+              .map(key => {
+                const valBefore = before?.[key] ?? '—';
+                const valAfter  = after?.[key]  ?? '—';
+                return `
+                  <tr>
+                    <td style="padding:8px; border-top:1px solid #ddd;">${key}</td>
+                    <td style="padding:8px; border-top:1px solid #ddd;">${JSON.stringify(valBefore)}</td>
+                    <td style="padding:8px; border-top:1px solid #ddd;">${JSON.stringify(valAfter)}</td>
+                  </tr>
+                `;
+              })
+              .join('')
+          }
+        </tbody>
+      </table>
+
+      <p style="font-size:12px; color:#999; text-align:center; margin-top:2em;">
+        &copy; ${new Date().getFullYear()} ${platformName}. 
+        <br/>You’re receiving this because you’re subscribed to audit notifications.
+      </p>
+    </div>
+  `;
+
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM,
+    to,
+    subject: `${platformName} Audit • [${action}] ${entity}#${entityId}`,
+    html,
+    text: `${title}\nPerformed by ${user.firstName} ${user.lastName} at ${createdAt}`
+  });
+};
