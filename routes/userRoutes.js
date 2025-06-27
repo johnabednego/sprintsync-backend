@@ -14,7 +14,7 @@ const { requireAuth, requireAdmin } = require('../middleware/auth');
  * @swagger
  * /users:
  *   get:
- *     summary: List all users (admin only)
+ *     summary: List all users
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -51,10 +51,8 @@ const { requireAuth, requireAdmin } = require('../middleware/auth');
  *                     $ref: '#/components/schemas/User'
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
- *       403:
- *         description: Forbidden – admin only
  */
-router.get('/', requireAuth, requireAdmin, userCtl.listUsers);
+router.get('/', requireAuth, userCtl.listUsers);
 
 /**
  * @swagger

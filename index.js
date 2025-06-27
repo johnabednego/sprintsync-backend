@@ -5,8 +5,9 @@ const morgan = require('morgan');
 const customCors = require('./middleware/customCors');
 const connectDB = require('./config/db');
 const setupSwaggerDocs = require('./config/swaggerUiConfig');
-const userRoutes = require('./routes/users');
-const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/userRoutes');
+const authRoutes = require('./routes/authRoutes');
+const taskRoutes = require('./routes/taskRoutes');
 
 // Initialize app
 const app = express();
@@ -39,6 +40,8 @@ if (process.env.NODE_ENV !== 'production') {
 app.use('/api/users', userRoutes);
 // Mount auth routes
 app.use('/api/auth', authRoutes);
+// Mount task routes
+app.use('/api/task', taskRoutes);
 
 // Example root route
 app.get('/', (req, res) => {

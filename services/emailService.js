@@ -9,6 +9,15 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+const { SMTP_USER, SMTP_PASS, SMTP_FROM } = process.env;
+if (!SMTP_USER || !SMTP_PASS || !SMTP_FROM) {
+  throw new Error('SMTP_USER, SMTP_PASS and SMTP_FROM must be set');
+}
+
+/**
+ * Send a otp-related  email.
+ * 
+ * */
 
 exports.sendOTP = async (to, otp, emailPurpose) => {
   const platformName = 'SprintSync'; 
@@ -36,6 +45,85 @@ exports.sendOTP = async (to, otp, emailPurpose) => {
     to,
     subject: `${platformName} - ${emailPurpose} OTP Code`,
     text: `Your OTP is ${otp}. It expires in 10 minutes.`,
+    html
+  });
+};
+
+
+
+/**
+ * Send a task-related notification email.
+ *
+ * @param {'created'|'updated'|'assigned'|'statusChanged'|'timeLogged'} type
+ * @param {object} task   – populated Task document
+ * @param {object} recipient – { email, firstName, lastName }
+ */
+exports.sendTaskNotification = async (type, task, recipient) => {
+  const { title, description, status, totalMinutes, createdAt, updatedAt } = task;
+  const fullName = `${recipient.firstName} ${recipient.lastName}`;
+  let subject, intro;
+
+  switch (type) {
+    case 'created':
+      subject = `New Task Created: "${title}"`;
+      intro = `A new task has been created and assigned to you.`;
+      break;
+    case 'assigned':
+      subject = `Task Assigned: "${title}"`;
+      intro = `You have been assigned a task.`;
+      break;
+    case 'updated':
+      subject = `Task Updated: "${title}"`;
+      intro = `The task details have been updated.`;
+      break;
+    case 'statusChanged':
+      subject = `Task Status Updated: "${title}" is now ${status}`;
+      intro = `The status of your task has changed.`;
+      break;
+    case 'timeLogged':
+      subject = `Time Logged on Task: "${title}"`;
+      intro = `Minutes have been logged against the task.`;
+      break;
+    default:
+      subject = `Notification for task "${title}"`;
+      intro = ``;
+  }
+
+  const html = `
+    <div style="font-family: sans-serif; max-width:600px; margin:auto; padding:20px; background:#fafafa; border-radius:8px;">
+      <h2 style="color:#333;">${subject}</h2>
+      <p>Hi ${fullName},</p>
+      <p>${intro}</p>
+      <table style="width:100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding:8px; border:1px solid #ddd;"><strong>Title</strong></td>
+          <td style="padding:8px; border:1px solid #ddd;">${title}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px; border:1px solid #ddd;"><strong>Description</strong></td>
+          <td style="padding:8px; border:1px solid #ddd;">${description || '—'}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px; border:1px solid #ddd;"><strong>Status</strong></td>
+          <td style="padding:8px; border:1px solid #ddd;">${status}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px; border:1px solid #ddd;"><strong>Total Time</strong></td>
+          <td style="padding:8px; border:1px solid #ddd;">${(totalMinutes/60).toFixed(2)} hrs</td>
+        </tr>
+        <tr>
+          <td style="padding:8px; border:1px solid #ddd;"><strong>Last Updated</strong></td>
+          <td style="padding:8px; border:1px solid #ddd;">${new Date(updatedAt).toLocaleString()}</td>
+        </tr>
+      </table>
+      <p style="font-size:12px; color:#666; margin-top:20px;">SprintSync Notification</p>
+    </div>
+  `;
+
+  await transporter.sendMail({
+    from: SMTP_FROM,
+    to: recipient.email,
+    subject,
     html
   });
 };

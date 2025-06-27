@@ -1,4 +1,14 @@
 const Task = require('../models/Task');
+const User  = require('../models/User');
+const email = require('../services/emailService');
+
+async function notifyAssigned(task, eventType) {
+  if (!task.assignedTo) return;
+  const user = await User.findById(task.assignedTo).select('email firstName lastName');
+  if (user) {
+    await email.sendTaskNotification(eventType, task, user);
+  }
+}
 
 /**
  * Create a new task
@@ -7,18 +17,10 @@ const Task = require('../models/Task');
 exports.createTask = async (req, res, next) => {
   try {
     const { title, description, project, assignedTo, tags } = req.body;
-    const task = await Task.create({
-      title,
-      description,
-      project,
-      assignedTo,
-      tags,
-      createdBy: req.user._id
-    });
+    const task = await Task.create({ title, description, project, assignedTo, tags, createdBy: req.user._id });
+    await notifyAssigned(task, 'created');
     res.status(201).json(task);
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 };
 
 /**
@@ -65,18 +67,13 @@ exports.getTaskById = async (req, res, next) => {
  */
 exports.updateTask = async (req, res, next) => {
   try {
-    const updates = (({ title, description, project, assignedTo, tags }) =>
+    const fields = (({ title, description, project, assignedTo, tags }) =>
       ({ title, description, project, assignedTo, tags }))(req.body);
-    const task = await Task.findByIdAndUpdate(
-      req.params.id,
-      updates,
-      { new: true, runValidators: true }
-    );
+    const task = await Task.findByIdAndUpdate(req.params.id, fields, { new: true, runValidators: true });
     if (!task) return res.status(404).json({ message: 'Task not found' });
+    await notifyAssigned(task, 'updated');
     res.json(task);
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 };
 
 /**
@@ -103,10 +100,9 @@ exports.changeStatus = async (req, res, next) => {
     const task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ message: 'Task not found' });
     await task.changeStatus(status);
+    await notifyAssigned(task, 'statusChanged');
     res.json(task);
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 };
 
 /**
@@ -121,8 +117,7 @@ exports.addTime = async (req, res, next) => {
     if (!task) return res.status(404).json({ message: 'Task not found' });
     task.totalMinutes += minutes;
     await task.save();
+    await notifyAssigned(task, 'timeLogged');
     res.json(task);
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 };
