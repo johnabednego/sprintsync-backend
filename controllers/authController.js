@@ -59,10 +59,11 @@ exports.signup = async (req, res, next) => {
 
     // generate & save OTP
     const otp = user.generateOTP('emailVerification');
+    const emailPurpose = "Email Verification"
     await user.save();
 
     // send email
-    await emailService.sendOTP(email, otp);
+    await emailService.sendOTP(email, otp, emailPurpose);
 
     // respond with success
     res.status(201).json({
@@ -145,8 +146,10 @@ exports.forgotPassword = async (req, res, next) => {
     }
 
     const otp = user.generateOTP('passwordReset');
+    const emailPurpose = "Password Reset"
+
     await user.save();
-    await emailService.sendOTP(email, otp);
+    await emailService.sendOTP(email, otp, emailPurpose);
 
     res.json({ message: 'Password reset OTP sent to your email.' });
   } catch (err) {
@@ -215,8 +218,15 @@ exports.resendOTP = async (req, res, next) => {
 
     // generate, save, and send
     const code = user.generateOTP(purpose);
+
+    let emailPurpose = "Password Reset"
+
+    if(purpose === 'emailVerification'){
+      emailPurpose = "Email Verification"
+    }
+  
     await user.save();
-    await emailService.sendOTP(email, code);
+    await emailService.sendOTP(email, code, emailPurpose);
 
     res.json({ message: `New OTP sent for ${purpose}.` });
   } catch (err) {

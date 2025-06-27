@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
 });
 
 
-exports.sendOTP = async (to, otp) => {
+exports.sendOTP = async (to, otp, emailPurpose) => {
   const platformName = 'SprintSync'; 
 
   const html = `
@@ -34,7 +34,7 @@ exports.sendOTP = async (to, otp) => {
   await transporter.sendMail({
     from: process.env.SMTP_FROM,
     to,
-    subject: `${platformName} - Your OTP Code`,
+    subject: `${platformName} - ${emailPurpose} OTP Code`,
     text: `Your OTP is ${otp}. It expires in 10 minutes.`,
     html
   });
