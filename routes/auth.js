@@ -249,4 +249,52 @@ router.post('/forgot-password', authCtl.forgotPassword);
  */
 router.post('/reset-password', authCtl.resetPassword);
 
+/**
+ * @swagger
+ * /auth/resend-otp:
+ *   post:
+ *     summary: Resend a one-time code (OTP) if the previous one expired
+ *     tags: [Authentication]
+ *     requestBody:
+ *       description: Must supply the user’s email and which OTP you need
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - purpose
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: The user’s email address
+ *               purpose:
+ *                 type: string
+ *                 enum:
+ *                   - emailVerification
+ *                   - passwordReset
+ *                 description: |
+ *                   Which OTP to resend:
+ *                     • `emailVerification` (signup flow)
+ *                     • `passwordReset` (forgot-password flow)
+ *     responses:
+ *       200:
+ *         description: If eligible, a new OTP will be sent (or a generic OK)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Bad request (invalid purpose, still-valid OTP, already verified, etc.)
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.post('/resend-otp', authCtl.resendOTP);
+
+
 module.exports = router;

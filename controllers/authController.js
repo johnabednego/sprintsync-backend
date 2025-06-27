@@ -179,3 +179,47 @@ exports.resetPassword = async (req, res, next) => {
     next(err);
   }
 };
+
+/**
+ * POST /api/auth/resend-otp
+ * Body: { email, purpose }
+ *
+ * - `purpose` must be "emailVerification" or "passwordReset"
+ * - Only sends a new OTP if none exists or the existing one has expired
+ */
+exports.resendOTP = async (req, res, next) => {
+  try {
+    const { email, purpose } = req.body;
+    if (!User.OTP_PURPOSES.includes(purpose)) {
+      return res.status(400).json({ message: 'Invalid purpose' });
+    }
+
+    const user = await User.findOne({ email })
+      .select('+otp +otpExpiry +otpPurpose +emailVerified');
+    if (!user) {
+      // avoid revealing which emails exist
+      return res.status(200).json({ message: 'If eligible, a new code will be sent.' });
+    }
+
+    // block duplicate resend if still valid
+    if (user.otp && user.otpExpiry && Date.now() < user.otpExpiry) {
+      return res
+        .status(400)
+        .json({ message: 'A valid code has already been sent. Please wait until it expires.' });
+    }
+
+    // signup case: if they already verified, block
+    if (purpose === 'emailVerification' && user.emailVerified) {
+      return res.status(400).json({ message: 'Email is already verified.' });
+    }
+
+    // generate, save, and send
+    const code = user.generateOTP(purpose);
+    await user.save();
+    await emailService.sendOTP(email, code);
+
+    res.json({ message: `New OTP sent for ${purpose}.` });
+  } catch (err) {
+    next(err);
+  }
+};
