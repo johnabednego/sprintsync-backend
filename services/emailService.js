@@ -127,3 +127,53 @@ exports.sendTaskNotification = async (type, task, recipient) => {
     html
   });
 };
+
+/**
+ * Send a project-related notification email.
+ * @param {'created'|'updated'|'statusChanged'} type
+ * @param {object} project – populated Project document
+ * @param {object} recipient – { email, firstName, lastName }
+ */
+exports.sendProjectNotification = async (type, project, recipient) => {
+  const { name, description, status, startDate, endDate, updatedAt } = project;
+  const fullName = `${recipient.firstName} ${recipient.lastName}`;
+  let subject, intro;
+
+  switch (type) {
+    case 'created':
+      subject = `New Project: "${name}"`;
+      intro = `A new project has been created and you have been added.`;
+      break;
+    case 'updated':
+      subject = `Project Updated: "${name}"`;
+      intro = `Project details have been revised.`;
+      break;
+    case 'statusChanged':
+      subject = `Project Status Changed: "${name}" is now ${status}`;
+      intro = `The status of a project you're part of has changed.`;
+      break;
+    default:
+      subject = `Notification for project "${name}"`;
+      intro = ``;
+  }
+
+  const html = `
+    <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:20px;background:#f0f0f0;border-radius:8px;">
+      <h2>${subject}</h2>
+      <p>Hi ${fullName},</p>
+      <p>${intro}</p>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr><td style="padding:8px;border:1px solid #ccc;"><strong>Name</strong></td><td style="padding:8px;border:1px solid #ccc;">${name}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ccc;"><strong>Description</strong></td><td style="padding:8px;border:1px solid #ccc;">${description || '—'}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ccc;"><strong>Status</strong></td><td style="padding:8px;border:1px solid #ccc;">${status}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ccc;"><strong>Start</strong></td><td style="padding:8px;border:1px solid #ccc;">${new Date(startDate).toLocaleDateString()}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ccc;"><strong>End</strong></td><td style="padding:8px;border:1px solid #ccc;">${endDate ? new Date(endDate).toLocaleDateString() : 'TBD'}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ccc;"><strong>Last Updated</strong></td><td style="padding:8px;border:1px solid #ccc;">${new Date(updatedAt).toLocaleString()}</td></tr>
+      </table>
+      <p style="font-size:12px;color:#666;margin-top:20px;">SprintSync Notification</p>
+    </div>
+  `;
+
+  await transporter.sendMail({ from: SMTP_FROM, to: recipient.email, subject, html });
+};
+
