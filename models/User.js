@@ -1,34 +1,34 @@
 // models/User.js
 
 const mongoose = require('mongoose');
-const bcrypt   = require('bcrypt');
-const crypto   = require('crypto');
+const bcrypt   = require('bcryptjs');
 
-const profileSchema               = require('./Profile');
-const notificationSettingsSchema  = require('./NotificationSettings');
+const OTP_PURPOSES = ['emailVerification', 'passwordReset'];
 
 const userSchema = new mongoose.Schema({
   // ————— Core Identity —————
   email: {
-    type:     String,
-    required: true,
-    unique:   true,
-    lowercase:true,
-    trim:     true,
-    index:    true
+    type:      String,
+    required:  true,
+    unique:    true,
+    lowercase: true,
+    trim:      true,
+    index:     true
   },
   firstName:  { type: String, required: true, trim: true },
   lastName:   { type: String, required: true, trim: true },
 
   // ————— Auth —————
-  // this field holds the bcrypt hash; select:false keeps it out of queries by default
-  password:             { type: String, required: true, select: false },
-  isAdmin:              { type: Boolean, default: false },
+  // holds bcrypt hash; exclude by default
+  password:   { type: String, required: true, select: false },
+  isAdmin:    { type: Boolean, default: false },
 
-  // ————— Profile & Contact —————
-  profile: {
-    type:    profileSchema,
-    default: () => ({})
+  // ————— Profile & Contact (flattened) —————
+  avatarUrl:    { type: String, default: '' },
+  phoneNumber:  { type: String, default: '' },
+  address: {
+    country:   { type: String, default: '' },
+    city:      { type: String, default: '' },
   },
 
   // ————— Preferences & Notifications —————
@@ -37,87 +37,117 @@ const userSchema = new mongoose.Schema({
     timezone:     { type: String, default: 'UTC' },
     itemsPerPage: { type: Number, default: 20 }
   },
-  notificationSettings: {
-    type:    notificationSettingsSchema,
-    default: () => ({})
+  emailOnAssignment:  { type: Boolean, default: true },
+  emailOnComment:     { type: Boolean, default: true },
+  pushOnDailySummary: { type: Boolean, default: false },
+
+  // ————— Verification & Reset via OTP —————
+  emailVerified: { type: Boolean, default: false },
+
+  // one-time code (6-digit string), used for either verifying email or resetting pw
+  otp: {
+    type: String,
+    select: false
+  },
+  otpExpiry: {
+    type: Date,
+    select: false
+  },
+  otpPurpose: {
+    type: String,
+    enum: OTP_PURPOSES,
+    select: false
   },
 
-  // ————— Next-Level Enhancements —————
-  emailVerified:        { type: Boolean, default: false },
-  emailVerifyToken:     { type: String, select: false },
-  resetPasswordToken:   { type: String, select: false },
-  resetPasswordExpires: { type: Date,   select: false },
-
+  // ————— Auditing —————
   lastUpdatedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref:  'User'
   }
+
 }, {
   timestamps: true,
 });
 
 
-
-/**
- * Virtual: fullName
- */
+// ——— Virtual: fullName ———
 userSchema.virtual('fullName')
-  .get(function () {
+  .get(function() {
     return `${this.firstName} ${this.lastName}`;
   });
 
 
-/**
- * Pre-save hook:
- * - If the password field has been created or modified, hash it.
- */
-userSchema.pre('save', async function (next) {
+// ——— Pre-save Hook: hash password ———
+userSchema.pre('save', async function(next) {
   if (this.isModified('password')) {
-    const saltRounds = 12;
-    this.password = await bcrypt.hash(this.password, saltRounds);
+    this.password = await bcrypt.hash(this.password, 12);
   }
   next();
 });
 
 
+// ——— Instance Methods ———
+
 /**
- * Generate a one-time token for email verification.
+ * Generate and store a 6-digit OTP for the given purpose.
+ * @param {'emailVerification'|'passwordReset'} purpose
+ * @returns {string} the generated OTP
  */
-userSchema.methods.generateEmailVerifyToken = function () {
-  this.emailVerifyToken = crypto.randomBytes(20).toString('hex');
-  return this.emailVerifyToken;
+userSchema.methods.generateOTP = function(purpose) {
+  if (!OTP_PURPOSES.includes(purpose)) {
+    throw new Error(`Invalid OTP purpose: ${purpose}`);
+  }
+  // 6-digit numeric code
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  this.otp        = code;
+  this.otpExpiry  = Date.now() + 10 * 60 * 1000; // expires in 10m
+  this.otpPurpose = purpose;
+  return code;
 };
 
 /**
- * Generate a password-reset token & expiry.
+ * Verify a provided OTP matches the stored one, is unexpired, and for the right purpose.
+ * @param {string} code
+ * @param {'emailVerification'|'passwordReset'} purpose
+ * @returns {boolean}
  */
-userSchema.methods.generatePasswordReset = function () {
-  this.resetPasswordToken   = crypto.randomBytes(20).toString('hex');
-  this.resetPasswordExpires = Date.now() + 3600 * 1000; // 1 hour
-  return this.resetPasswordToken;
+userSchema.methods.verifyOTP = function(code, purpose) {
+  return (
+    this.otp === code &&
+    this.otpPurpose === purpose &&
+    this.otpExpiry &&
+    Date.now() < this.otpExpiry
+  );
 };
 
+/**
+ * Clear out OTP fields (after use).
+ */
+userSchema.methods.clearOTP = function() {
+  this.otp        = undefined;
+  this.otpExpiry  = undefined;
+  this.otpPurpose = undefined;
+};
 
 /**
- * Compare a candidate plaintext password to the stored hash.
- * @param {string} candidate 
+ * Compare a plaintext password to the stored hash.
+ * Ensure you `.select('+password')` when loading the user.
+ * @param {string} candidate
  * @returns {Promise<boolean>}
  */
-userSchema.methods.verifyPassword = function (candidate) {
-  // when fetching user, remember to include '+password' in the query
+userSchema.methods.verifyPassword = function(candidate) {
   return bcrypt.compare(candidate, this.password);
 };
 
-
 /**
- * toJSON override: remove sensitive/internal fields before sending to client.
+ * Clean JSON output: strip sensitive fields.
  */
-userSchema.methods.toJSON = function () {
+userSchema.methods.toJSON = function() {
   const obj = this.toObject();
   delete obj.password;
-  delete obj.emailVerifyToken;
-  delete obj.resetPasswordToken;
-  delete obj.resetPasswordExpires;
+  delete obj.otp;
+  delete obj.otpExpiry;
+  delete obj.otpPurpose;
   return obj;
 };
 
