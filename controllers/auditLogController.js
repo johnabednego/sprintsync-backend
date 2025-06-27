@@ -20,6 +20,7 @@ exports.listLogs = async (req, res) => {
   }
 };
 
+
 exports.getLogById = async (req, res) => {
   try {
     const log = await AuditLog.findById(req.params.id)

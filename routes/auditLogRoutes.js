@@ -3,6 +3,7 @@ const router = express.Router();
 const auditLogCtl = require('../controllers/auditLogController');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 
+
 /**
  * @swagger
  * tags:
