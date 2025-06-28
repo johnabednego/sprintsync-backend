@@ -1,51 +1,51 @@
 Task,Estimated (h),Actual (h)
 # --- Backend Configuration ---
-Initialize and configure database connection (config/db.js),0.5,0.5
-Set up Swagger UI documentation (config/swaggerUiConfig.js),0.5,0.4
+Initialize and configure database connection (config/db.js),0.5,0.1
+Set up Swagger UI documentation (config/swaggerUiConfig.js),0.5,0.2
 
 # --- Authentication & User Logic ---
-Implement JWT login, signup, and token verification (authController.js),1.0,1.0
-Build user‐profile endpoints and business logic (userController.js),0.8,0.7
+Implement JWT login, signup, and token verification (authController.js),1.0,0.5
+Build user‐profile endpoints and business logic (userController.js),0.8,0.3
 
 # --- Core Task & Project APIs ---
-Create CRUD endpoints for tasks (taskController.js),1.0,1.2
-Create CRUD endpoints for projects (projectController.js),1.0,0.9
+Create CRUD endpoints for tasks (taskController.js),1.0,0.6
+Create CRUD endpoints for projects (projectController.js),1.0,0.5
 
 # --- Time Tracking & Tags ---
-Implement time‐entry create/read/update/delete (timeEntryController.js),0.8,1.0
-Add tagging functionality for tasks (tagController.js),0.5,0.6
+Implement time‐entry create/read/update/delete (timeEntryController.js),0.8,0.5
+Add tagging functionality for tasks (tagController.js),0.5,0.5
 
 # --- Comments & Audit Logging ---
 Build comment add/edit/delete endpoints (commentController.js),0.5,0.5
-Record structured audit logs for every action (auditLogController.js),0.8,0.9
+Record structured audit logs for every action (auditLogController.js),0.8,0.3
 
 # --- Middleware ---
-Enforce JWT auth on protected routes (middleware/auth.js),0.5,0.4
-Apply custom CORS policy across all APIs (middleware/customCors.js),0.3,0.2
+Enforce JWT auth on protected routes (middleware/auth.js),0.5,0.1
+Apply custom CORS policy across all APIs (middleware/customCors.js),0.3,0.1
 
 # --- Data Models ---
-Define User schema and validation rules (models/User.js),0.3,0.2
-Define Task schema and status transitions (models/Task.js),0.3,0.3
-Define Project schema relationships (models/Project.js),0.3,0.2
-Define TimeEntry schema and indexing (models/TimeEntry.js),0.3,0.3
-Define Tag schema and associations (models/Tag.js),0.2,0.2
-Define Comment schema and referencing (models/Comment.js),0.2,0.2
-Define AuditLog schema with metadata fields (models/AuditLog.js),0.2,0.2
+Define User schema and validation rules (models/User.js),0.3,0.1
+Define Task schema and status transitions (models/Task.js),0.3,0.1
+Define Project schema relationships (models/Project.js),0.3,0.1
+Define TimeEntry schema and indexing (models/TimeEntry.js),0.3,0.1
+Define Tag schema and associations (models/Tag.js),0.2,0.1
+Define Comment schema and referencing (models/Comment.js),0.2,0.1
+Define AuditLog schema with metadata fields (models/AuditLog.js),0.2,0.1
 
 # --- Routes Wiring ---
-Wire up auth routes (login/signup) (routes/authRoutes.js),0.4,0.4
+Wire up auth routes (login/signup) (routes/authRoutes.js),0.4,0.2
 Wire up user management routes (routes/userRoutes.js),0.3,0.3
-Wire up task routes (routes/taskRoutes.js),0.4,0.5
-Wire up project routes (routes/projectRoutes.js),0.4,0.4
-Wire up time‐entry routes (routes/timeEntryRoutes.js),0.4,0.5
-Wire up tag routes (routes/tagRoutes.js),0.3,0.3
-Wire up comment routes (routes/commentRoutes.js),0.3,0.3
+Wire up task routes (routes/taskRoutes.js),0.4,0.3
+Wire up project routes (routes/projectRoutes.js),0.4,0.3
+Wire up time‐entry routes (routes/timeEntryRoutes.js),0.4,0.3
+Wire up tag routes (routes/tagRoutes.js),0.3,0.2
+Wire up comment routes (routes/commentRoutes.js),0.3,0.2
 Wire up audit‐log routes (routes/auditLogRoutes.js),0.3,0.3
 
 # --- Supporting Services & Entrypoint ---
-Implement email notifications (OTP, task updates) (services/emailService.js),1.0,1.2
-Build token generation/validation utilities (services/tokenService.js),0.5,0.5
-Bootstrap Express app, middleware, and error‐handling (index.js),0.5,0.6
+Implement email notifications (OTP, task updates) (services/emailService.js),1.0,0.5
+Build token generation/validation utilities (services/tokenService.js),0.5,0.1
+Bootstrap Express app, middleware, and error‐handling (index.js),0.5,0.1
 
 # --- AI Assist Stub ---
 Create deterministic stub for /ai/suggest endpoint,1.0,
