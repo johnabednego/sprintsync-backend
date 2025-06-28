@@ -13,6 +13,7 @@ const timeEntryRoutes = require('./routes/timeEntryRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const tagRoutes = require('./routes/tagRoutes');
 const auditLogRoutes = require('./routes/auditLogRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 
 // Initialize app
@@ -58,6 +59,8 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/tags', tagRoutes);
 // Mount auditLog routes
 app.use('/api/audit-logs', auditLogRoutes);
+// Mount ai routes
+app.use('/api/ai', aiRoutes);
 
 
 // Example root route
