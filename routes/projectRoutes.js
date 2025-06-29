@@ -53,21 +53,51 @@ router.post('/', requireAuth, ctl.createProject);
  * @swagger
  * /projects:
  *   get:
- *     summary: List all projects
+ *     summary: List all projects with pagination
  *     tags: [Projects]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number (starting from 1)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 20
+ *         description: Number of items per page
  *     responses:
  *       200:
- *         description: Array of projects
+ *         description: Paginated list of projects
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Project'
+ *               type: object
+ *               properties:
+ *                 page:
+ *                   type: integer
+ *                   example: 1
+ *                 limit:
+ *                   type: integer
+ *                   example: 20
+ *                 total:
+ *                   type: integer
+ *                   example: 100
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Project'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
  */
 router.get('/', requireAuth, ctl.getProjects);
+
 
 /**
  * @swagger

@@ -50,7 +50,7 @@ app.use('/api/auth', authRoutes);
 // Mount task routes
 app.use('/api/task', taskRoutes);
 // Mount project routes
-app.use('/api/project', projectRoutes);
+app.use('/api/projects', projectRoutes);
 // Mount timeEntry routes
 app.use('/api/time-entries', timeEntryRoutes);
 // Mount comment routes
