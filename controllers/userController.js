@@ -14,18 +14,33 @@ exports.getProfile = async (req, res, next) => {
   }
 };
 
+// controllers/userController.js
+
 /**
  * PATCH /api/users/me
- * Protected; update your own profile fields.
+ * Protected; update your own profile & notification settings.
  */
 exports.updateProfile = async (req, res, next) => {
   try {
-    const updates = {};
-    // whitelist what users can change themselves
-    ['firstName','lastName','profile','preferences','notificationSettings'].forEach(fld => {
-      if (req.body[fld] !== undefined) updates[fld] = req.body[fld];
-    });
-    updates.lastUpdatedBy = req.user.sub;
+    const {
+      avatarUrl,
+      phoneNumber,
+      address,
+      preferences,
+      emailOnAssignment,
+      emailOnComment,
+      pushOnDailySummary
+    } = req.body;
+
+    const updates = { lastUpdatedBy: req.user.sub };
+
+    if (avatarUrl         !== undefined) updates.avatarUrl         = avatarUrl;
+    if (phoneNumber       !== undefined) updates.phoneNumber       = phoneNumber;
+    if (address           !== undefined) updates.address           = address;
+    if (preferences       !== undefined) updates.preferences       = preferences;
+    if (emailOnAssignment !== undefined) updates.emailOnAssignment = emailOnAssignment;
+    if (emailOnComment    !== undefined) updates.emailOnComment    = emailOnComment;
+    if (pushOnDailySummary!== undefined) updates.pushOnDailySummary= pushOnDailySummary;
 
     const user = await User.findByIdAndUpdate(
       req.user.sub,
