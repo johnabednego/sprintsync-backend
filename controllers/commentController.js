@@ -12,7 +12,7 @@ exports.createComment = async (req, res, next) => {
 
     // create
     const comment = await Comment.create({
-      author: req.user._id,
+      author: req.user.id,
       task:   taskId,
       text
     });
@@ -28,7 +28,7 @@ exports.createComment = async (req, res, next) => {
       comment.task.createdBy.toString(),
       comment.task.assignedTo?.toString()
     ]);
-    userIds.delete(req.user._id.toString());
+    userIds.delete(req.user.id.toString());
 
     const recipients = await User.find({ _id: { $in: [...userIds] } })
       .select('firstName lastName email');

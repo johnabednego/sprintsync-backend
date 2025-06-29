@@ -17,7 +17,7 @@ async function notifyAssigned(task, eventType) {
 exports.createTask = async (req, res, next) => {
   try {
     const { title, description, project, assignedTo, tags } = req.body;
-    const task = await Task.create({ title, description, project, assignedTo, tags, createdBy: req.user._id });
+    const task = await Task.create({ title, description, project, assignedTo, tags, createdBy: req.user.id });
     await notifyAssigned(task, 'created');
     res.status(201).json(task);
   } catch (err) { next(err); }

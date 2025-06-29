@@ -6,7 +6,7 @@ const email     = require('../services/emailService');
 exports.createEntry = async (req, res, next) => {
   try {
     const { taskId, minutes, startTime, endTime, notes } = req.body;
-    const entry = await TimeEntry.create({ task: taskId, user: req.user._id, minutes, startTime, endTime, notes });
+    const entry = await TimeEntry.create({ task: taskId, user: req.user.id, minutes, startTime, endTime, notes });
 
     // Update parent task totalMinutes
     const task = await Task.findById(taskId);
@@ -16,7 +16,7 @@ exports.createEntry = async (req, res, next) => {
     }
 
     // Notify creator and assignee
-    const users = await User.find({ _id: { $in: [req.user._id, task.assignedTo] } }).select('email firstName lastName');
+    const users = await User.find({ _id: { $in: [req.user.id, task.assignedTo] } }).select('email firstName lastName');
     const populatedEntry = await entry.populate('task', 'title');
     for (const user of users) {
       await email.sendTimeEntryNotification('created', populatedEntry, user);

@@ -15,7 +15,7 @@ exports.createTag = async (req, res, next) => {
     const { name, color, description } = req.body;
     const tag = await Tag.create({
       name, color, description,
-      createdBy: req.user._id
+      createdBy: req.user.id
     });
     await tag.populate('createdBy', 'firstName lastName');
     await notifyAdmins(tag, 'created');

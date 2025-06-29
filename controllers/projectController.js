@@ -23,7 +23,7 @@ exports.createProject = async (req, res, next) => {
       startDate,
       endDate,
       members,
-      createdBy: req.user._id
+      createdBy: req.user.id
     });
     await notifyMembers(proj, 'created');
     res.status(201).json(proj);
