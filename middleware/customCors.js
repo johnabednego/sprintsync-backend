@@ -6,7 +6,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(origin => ori
 const corsOptions = {
   origin: true, // Let custom middleware handle dynamic origin
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'sprintsync-api-key', 'x-requested-with'],
   preflightContinue: false,
   optionsSuccessStatus: 204,
