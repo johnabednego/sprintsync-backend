@@ -24,43 +24,65 @@ exports.userStats = async (req, res) => {
   res.json({ todo: counts[0], inProgress: counts[1], done: counts[2] });
 };
 
+exports.timePerDay = async (req, res, next) => {
+  try {
+    // 1) Project the day and a stringified user key
+    // 2) Group by { day, userStr } summing minutes
+    // 3) Regroup by day into an array of {k: userStr, v: total}
+    // 4) Convert that array into an object field "data"
+    // 5) Sort by day
+    const agg = await TimeEntry.aggregate([
+      {
+        $project: {
+          day: {
+            $dateToString: { format: '%Y-%m-%d', date: '$createdAt' }
+          },
+          userStr: { $toString: '$user' },
+          minutes: '$minutes'
+        }
+      },
+      {
+        $group: {
+          _id: { day: '$day', user: '$userStr' },
+          total: { $sum: '$minutes' }
+        }
+      },
+      {
+        $group: {
+          _id: '$_id.day',
+          byUser: {
+            $push: { k: '$_id.user', v: '$total' }
+          }
+        }
+      },
+      { $sort: { '_id': 1 } },
+      {
+        $project: {
+          _id: 0,
+          date: '$_id',
+          data: { $arrayToObject: '$byUser' }
+        }
+      }
+    ]);
 
-exports.timePerDay = async (req, res) => {
-  // Group by date, then sum minutes per user
-  const agg = await TimeEntry.aggregate([
-    { $project: {
-        day: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-        user: '$user',
-        minutes: '$minutes'
-      }
-    },
-    { $group: {
-        _id: { day: '$day', user: '$user' },
-        total: { $sum: '$minutes' }
-      }
-    },
-    { $group: {
-        _id: '$_id.day',
-        byUser: { $push: { k: '$_id.user', v: '$total' } }
-      }
-    },
-    { $sort: { '_id': 1 } },
-    { $project: {
-        date: '$_id',
-        data: { $arrayToObject: '$byUser' }
-      }
-    }
-  ]);
-  // Replace user IDs with names
-  const users = await User.find().select('firstName lastName');
-  const nameMap = Object.fromEntries(users.map(u => [u._id.toString(), `${u.firstName} ${u.lastName}`]));
+    // 6) replace user IDs with names
+    const users = await User.find().select('firstName lastName');
+    const nameMap = Object.fromEntries(
+      users.map(u => [u._id.toString(), `${u.firstName} ${u.lastName}`])
+    );
 
-  const result = agg.map(day => {
-    const obj = { date: day.date };
-    for (const [uid, mins] of Object.entries(day.data)) {
-      obj[nameMap[uid] || uid] = mins;
-    }
-    return obj;
-  });
-  res.json(result);
+    const result = agg.map(dayRec => {
+      const out = { date: dayRec.date };
+      for (const [userId, mins] of Object.entries(dayRec.data)) {
+        const name = nameMap[userId] || userId;
+        out[name] = mins;
+      }
+      return out;
+    });
+
+    return res.json(result);
+
+  } catch (err) {
+    next(err);
+  }
 };

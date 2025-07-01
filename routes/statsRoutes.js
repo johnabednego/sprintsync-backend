@@ -61,4 +61,52 @@ router.get('/admin', requireAuth, requireAdmin, ctl.adminStats);
  */
 router.get('/me', requireAuth, ctl.userStats);
 
+/**
+ * @swagger
+ * /stats/time-per-day:
+ *   get:
+ *     summary: Get total time logged per day (by the authenticated user)
+ *     tags: [Stats]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         required: false
+ *         description: Start date in YYYY-MM-DD format
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         required: false
+ *         description: End date in YYYY-MM-DD format
+ *     responses:
+ *       200:
+ *         description: Time logged per day
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   date:
+ *                     type: string
+ *                     format: date
+ *                   totalMinutes:
+ *                     type: number
+ *               example:
+ *                 - date: "2025-06-25"
+ *                   totalMinutes: 120
+ *                 - date: "2025-06-26"
+ *                   totalMinutes: 95
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+router.get('/time-per-day', requireAuth, ctl.timePerDay);
+
 module.exports = router;

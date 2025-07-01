@@ -53,6 +53,8 @@ Create deterministic stub for /ai/suggest endpoint,1.0,0.4
 # --- Dashboard Stats---
 Shows overall “at a glance” stats., 1.0, 0.3
 
+# --- Analytics---
+A time‑per‑day per user chart, 0.5, 0.3
 
 # --- README.md ---
 Readme Write up , 2.0, 0.5
