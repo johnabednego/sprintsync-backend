@@ -56,35 +56,69 @@ router.post('/', requireAuth, taskCtl.createTask);
  * @swagger
  * /tasks:
  *   get:
- *     summary: Get all tasks (with optional filters)
+ *     summary: List tasks (with pagination, filtering, sorting)
  *     tags: [Tasks]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
  *         name: status
  *         schema:
  *           type: string
- *         description: Filter by task status
+ *           enum: [todo, inProgress, done]
  *       - in: query
  *         name: assignedTo
  *         schema:
  *           type: string
- *           description: Filter by assigned user ID
+ *         description: User ID
  *       - in: query
  *         name: project
  *         schema:
  *           type: string
- *           description: Filter by project ID
+ *         description: Project ID
+ *       - in: query
+ *         name: title
+ *         schema:
+ *           type: string
+ *         description: Substring search on title
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [title, status, totalMinutes, createdAt]
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
  *     responses:
  *       200:
- *         description: List of tasks
+ *         description: Paginated list of tasks
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Task'
+ *               type: object
+ *               properties:
+ *                 page:
+ *                   type: integer
+ *                 limit:
+ *                   type: integer
+ *                 total:
+ *                   type: integer
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Task'
  */
 router.get('/', requireAuth, taskCtl.getTasks);
 

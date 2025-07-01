@@ -47,8 +47,8 @@ if (process.env.NODE_ENV !== 'production') {
 app.use('/api/users', userRoutes);
 // Mount auth routes
 app.use('/api/auth', authRoutes);
-// Mount task routes
-app.use('/api/task', taskRoutes);
+// Mount tasks routes
+app.use('/api/tasks', taskRoutes);
 // Mount project routes
 app.use('/api/projects', projectRoutes);
 // Mount timeEntry routes

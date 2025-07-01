@@ -1,6 +1,6 @@
 const Comment = require('../models/Comment');
-const Task    = require('../models/Task');
-const User    = require('../models/User');
+const Task = require('../models/Task');
+const User = require('../models/User');
 const { sendCommentNotification } = require('../services/emailService');
 
 /**
@@ -13,15 +13,13 @@ exports.createComment = async (req, res, next) => {
     // create
     const comment = await Comment.create({
       author: req.user.id,
-      task:   taskId,
+      task: taskId,
       text
     });
 
     // populate author & task
-    await comment
-      .populate('author', 'firstName lastName email')
-      .populate('task', 'title assignedTo createdBy')
-      .execPopulate();
+    await comment.populate('author', 'firstName lastName email')
+    await comment.populate('task', 'title assignedTo createdBy')
 
     // gather recipients: task creator + assignee (excluding commenter)
     const userIds = new Set([
