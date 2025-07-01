@@ -1,39 +1,30 @@
+// controllers/userController.js
 const User = require('../models/User');
 
 /**
  * GET /api/users/me
- * Protected; returns the current user.
  */
 exports.getProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.sub);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json(user.toJSON());
+    const u = await User.findById(req.user.sub);
+    if (!u) return res.status(404).json({ error: 'User not found' });
+    res.json(u.toJSON());
   } catch (err) {
     next(err);
   }
 };
 
-// controllers/userController.js
-
 /**
  * PATCH /api/users/me
- * Protected; update your own profile & notification settings.
  */
 exports.updateProfile = async (req, res, next) => {
   try {
     const {
-      avatarUrl,
-      phoneNumber,
-      address,
-      preferences,
-      emailOnAssignment,
-      emailOnComment,
-      pushOnDailySummary
+      avatarUrl, phoneNumber, address,
+      preferences, emailOnAssignment,
+      emailOnComment, pushOnDailySummary
     } = req.body;
-
     const updates = { lastUpdatedBy: req.user.sub };
-
     if (avatarUrl         !== undefined) updates.avatarUrl         = avatarUrl;
     if (phoneNumber       !== undefined) updates.phoneNumber       = phoneNumber;
     if (address           !== undefined) updates.address           = address;
@@ -42,12 +33,13 @@ exports.updateProfile = async (req, res, next) => {
     if (emailOnComment    !== undefined) updates.emailOnComment    = emailOnComment;
     if (pushOnDailySummary!== undefined) updates.pushOnDailySummary= pushOnDailySummary;
 
-    const user = await User.findByIdAndUpdate(
+    const u = await User.findByIdAndUpdate(
       req.user.sub,
       { $set: updates },
       { new: true, runValidators: true }
     );
-    res.json(user.toJSON());
+    res.locals.updated = u;
+    res.json(u.toJSON());
   } catch (err) {
     next(err);
   }
@@ -55,21 +47,19 @@ exports.updateProfile = async (req, res, next) => {
 
 /**
  * POST /api/users/me/change-password
- * Protected; Body: { currentPassword, newPassword }
  */
 exports.changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const user = await User.findById(req.user.sub).select('+password');
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    const ok = await user.verifyPassword(currentPassword);
-    if (!ok) return res.status(400).json({ error: 'Current password is incorrect' });
-
-    user.password = newPassword;  // hashed by pre-save
-    user.lastUpdatedBy = req.user.sub;
-    await user.save();
-
+    const u = await User.findById(req.user.sub).select('+password');
+    if (!u) return res.status(404).json({ error: 'User not found' });
+    if (!await u.verifyPassword(currentPassword)) {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+    u.password = newPassword;
+    u.lastUpdatedBy = req.user.sub;
+    await u.save();
+    res.locals.updated = u;
     res.json({ message: 'Password changed successfully' });
   } catch (err) {
     next(err);
@@ -78,27 +68,16 @@ exports.changePassword = async (req, res, next) => {
 
 /**
  * GET /api/users/
- * Admin-only; list all users (with pagination).
- * Query: ?page=1&limit=20
  */
 exports.listUsers = async (req, res, next) => {
   try {
     const page  = Math.max(1, parseInt(req.query.page)  || 1);
     const limit = Math.max(1, parseInt(req.query.limit) || 20);
-
     const [users, total] = await Promise.all([
-      User.find()
-        .skip((page - 1) * limit)
-        .limit(limit),
+      User.find().skip((page-1)*limit).limit(limit),
       User.countDocuments()
     ]);
-
-    res.json({
-      page,
-      limit,
-      total,
-      data: users.map(u => u.toJSON())
-    });
+    res.json({ page, limit, total, data: users.map(u=>u.toJSON()) });
   } catch (err) {
     next(err);
   }
@@ -106,13 +85,12 @@ exports.listUsers = async (req, res, next) => {
 
 /**
  * GET /api/users/:id
- * Admin-only; fetch any user by ID.
  */
 exports.getUserById = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json(user.toJSON());
+    const u = await User.findById(req.params.id);
+    if (!u) return res.status(404).json({ error: 'User not found' });
+    res.json(u.toJSON());
   } catch (err) {
     next(err);
   }
@@ -120,8 +98,6 @@ exports.getUserById = async (req, res, next) => {
 
 /**
  * PATCH /api/users/:id
- * Admin-only; update any user.
- * Body: any subset of fields except password.
  */
 exports.updateUserById = async (req, res, next) => {
   try {
@@ -129,19 +105,18 @@ exports.updateUserById = async (req, res, next) => {
       'firstName','lastName','profile',
       'preferences','notificationSettings','isAdmin'
     ];
-    const updates = {};
-    whitelist.forEach(fld => {
-      if (req.body[fld] !== undefined) updates[fld] = req.body[fld];
+    const updates = { lastUpdatedBy: req.user.sub };
+    whitelist.forEach(f => {
+      if (req.body[f] !== undefined) updates[f] = req.body[f];
     });
-    updates.lastUpdatedBy = req.user.sub;
-
-    const user = await User.findByIdAndUpdate(
+    const u = await User.findByIdAndUpdate(
       req.params.id,
       { $set: updates },
       { new: true, runValidators: true }
     );
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json(user.toJSON());
+    if (!u) return res.status(404).json({ error: 'User not found' });
+    res.locals.updated = u;
+    res.json(u.toJSON());
   } catch (err) {
     next(err);
   }
@@ -149,11 +124,13 @@ exports.updateUserById = async (req, res, next) => {
 
 /**
  * DELETE /api/users/:id
- * Admin-only; remove a user.
  */
 exports.deleteUser = async (req, res, next) => {
   try {
-    await User.findByIdAndDelete(req.params.id);
+    const before = await User.findById(req.params.id).lean();
+    const u = await User.findByIdAndDelete(req.params.id);
+    if (!u) return res.status(404).json({ error: 'User not found' });
+    res.locals.updated = before;
     res.status(204).end();
   } catch (err) {
     next(err);

@@ -1,6 +1,7 @@
 const express  = require('express');
 const router   = express.Router();
 const authCtl  = require('../controllers/authController');
+const withAudit  = require('../utils/withAudit');
 
 /**
  * @swagger
@@ -81,7 +82,14 @@ const authCtl  = require('../controllers/authController');
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post('/signup', authCtl.signup);
+/**
+ * @route POST /api/auth/signup
+ * @action CREATE User
+ */
+router.post(
+  '/signup',
+  withAudit('User', 'CREATE', authCtl.signup)
+);
 
 /**
  * @swagger
@@ -124,7 +132,14 @@ router.post('/signup', authCtl.signup);
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post('/verify-email', authCtl.verifyEmail);
+/**
+ * @route POST /api/auth/verify-email
+ * @action UPDATE User
+ */
+router.post(
+  '/verify-email',
+  withAudit('User', 'UPDATE', authCtl.verifyEmail)
+);
 
 /**
  * @swagger
@@ -168,7 +183,15 @@ router.post('/verify-email', authCtl.verifyEmail);
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post('/login', authCtl.login);
+
+/**
+ * @route POST /api/auth/login
+ * @action LOGIN User
+ */
+router.post(
+  '/login',
+  withAudit('User', 'LOGIN', authCtl.login)
+);
 
 /**
  * @swagger
@@ -202,7 +225,14 @@ router.post('/login', authCtl.login);
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post('/forgot-password', authCtl.forgotPassword);
+/**
+ * @route POST /api/auth/forgot-password
+ * @action UPDATE User
+ */
+router.post(
+  '/forgot-password',
+  withAudit('User', 'UPDATE', authCtl.forgotPassword)
+);
 
 /**
  * @swagger
@@ -245,7 +275,14 @@ router.post('/forgot-password', authCtl.forgotPassword);
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post('/reset-password', authCtl.resetPassword);
+/**
+ * @route POST /api/auth/reset-password
+ * @action UPDATE User
+ */
+router.post(
+  '/reset-password',
+  withAudit('User', 'UPDATE', authCtl.resetPassword)
+);
 
 /**
  * @swagger
@@ -292,7 +329,14 @@ router.post('/reset-password', authCtl.resetPassword);
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post('/resend-otp', authCtl.resendOTP);
+/**
+ * @route POST /api/auth/resend-otp
+ * @action UPDATE User
+ */
+router.post(
+  '/resend-otp',
+  withAudit('User', 'UPDATE', authCtl.resendOTP)
+);
 
 
 module.exports = router;

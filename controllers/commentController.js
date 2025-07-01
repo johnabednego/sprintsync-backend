@@ -1,12 +1,30 @@
 const Comment = require('../models/Comment');
-const Task = require('../models/Task');
 const User = require('../models/User');
 const { sendCommentNotification } = require('../services/emailService');
+const withAudit = require('../utils/withAudit');
+
+async function notifyCommentRecipients(comment) {
+  // gather recipients: task creator + assignee (excluding commenter)
+  await comment.populate('task', 'createdBy assignedTo');
+  const userIds = new Set([
+    comment.task.createdBy.toString(),
+    comment.task.assignedTo?.toString()
+  ]);
+  userIds.delete(comment.author.toString());
+
+  const recipients = await User.find({ _id: { $in: [...userIds] } })
+    .select('firstName lastName email');
+
+  for (const recipient of recipients) {
+    await sendCommentNotification(comment, recipient);
+  }
+}
 
 /**
- * Create and notify
+ * POST /api/comments
+ * CREATE → audit CREATE
  */
-exports.createComment = async (req, res, next) => {
+exports.createComment = withAudit('Comment', 'CREATE', async (req, res, next) => {
   try {
     const { taskId, text } = req.body;
 
@@ -17,33 +35,24 @@ exports.createComment = async (req, res, next) => {
       text
     });
 
-    // populate author & task
-    await comment.populate('author', 'firstName lastName email')
-    await comment.populate('task', 'title assignedTo createdBy')
+    // populate author & task for response
+    await comment.populate('author', 'firstName lastName email');
+    await comment.populate('task', 'title assignedTo createdBy');
 
-    // gather recipients: task creator + assignee (excluding commenter)
-    const userIds = new Set([
-      comment.task.createdBy.toString(),
-      comment.task.assignedTo?.toString()
-    ]);
-    userIds.delete(req.user.id.toString());
-
-    const recipients = await User.find({ _id: { $in: [...userIds] } })
-      .select('firstName lastName email');
-
-    // notify each
-    for (const u of recipients) {
-      await sendCommentNotification(comment, u);
-    }
+    // notify recipients
+    res.locals.created = comment;
+    res.locals.auditUser = req.user.id;
+    await notifyCommentRecipients(comment);
 
     res.status(201).json(comment);
   } catch (err) {
     next(err);
   }
-};
+});
 
 /**
- * List comments for a task
+ * GET /api/comments/task/:taskId
+ * (no audit on reads)
  */
 exports.getCommentsByTask = async (req, res, next) => {
   try {
@@ -56,16 +65,19 @@ exports.getCommentsByTask = async (req, res, next) => {
   }
 };
 
-
 /**
- * Delete a comment
+ * DELETE /api/comments/:id
+ * DELETE → audit DELETE
  */
-exports.deleteComment = async (req, res, next) => {
+exports.deleteComment = withAudit('Comment', 'DELETE', async (req, res, next) => {
   try {
+    // withAudit captures `before` state
     const comment = await Comment.findByIdAndDelete(req.params.id);
     if (!comment) return res.status(404).json({ message: 'Comment not found' });
+
+    res.locals.auditUser = req.user.id;
     res.status(204).end();
   } catch (err) {
     next(err);
   }
-};
+});

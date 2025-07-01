@@ -2,23 +2,24 @@ const AuditLog = require('../models/AuditLog');
 const { sendAuditNotification } = require('../services/emailService');
 
 exports.listLogs = async (req, res) => {
-  const { page = 1, limit = 20 } = req.query;
+  const { page = 1, limit = 20, entity, action, user } = req.query;
   const skip = (page - 1) * limit;
-  try {
-    const [total, logs] = await Promise.all([
-      AuditLog.countDocuments(),
-      AuditLog.find()
-        .sort({ createdAt: -1 })
-        .skip(parseInt(skip, 10))
-        .limit(parseInt(limit, 10))
-        .populate('user', 'firstName lastName email')
-    ]);
-    res.json({ page: parseInt(page, 10), limit: parseInt(limit, 10), total, data: logs });
-  } catch (err) {
-    console.error('Error fetching audit logs:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
+  const filter = {};
+  if (entity) filter.entity = entity;
+  if (action) filter.action = action;
+  if (user)   filter.user   = user;
+
+  const [ total, logs ] = await Promise.all([
+    AuditLog.countDocuments(filter),
+    AuditLog.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(+skip)
+      .limit(+limit)
+      .populate('user', 'firstName lastName email')
+  ]);
+  res.json({ page: +page, limit: +limit, total, data: logs });
 };
+
 
 
 exports.getLogById = async (req, res) => {
